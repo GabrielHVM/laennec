@@ -3,7 +3,8 @@ from functools import partial
 import sys
 import os
 
-from src.pre_process_image import pre_process_all_images
+from pre_process_image import pre_process_all_images
+from centroid import draw_centroid_on_image
 
 
 def list_files_in_path(path):
@@ -74,8 +75,12 @@ def main() -> None:
         "../PH2Dataset/PH2 Dataset images"
     all_images_path = \
         complete_images_path(images_path_prefix)
-    print(all_images_path)
-    pre_process_all_images(all_images_path)
+
+    binary_mask = all_images_path[17]["binary_mask"]
+    #print(all_images_path)
+    #pre_process_all_images(all_images_path)
+    print(binary_mask)
+    draw_centroid_on_image(cv.imread(binary_mask, 0))
 
 
 if __name__ == "__main__":
