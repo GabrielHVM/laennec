@@ -1,11 +1,12 @@
 import cv2 as cv
+import numpy as np
 from functools import partial
 import sys
 import os
 
 from pre_process_image import pre_process_all_images
-from centroid import draw_centroid_on_image
-
+from centroid import draw_centroid_on_image, centroid_of_image
+from abcd import asymmetry
 
 def list_files_in_path(path):
     directories_list = os.listdir(path)
@@ -69,6 +70,20 @@ def lesion_image(path):
 def binary_mask_of_lesion(path):
     return cv.imread(path, 0)
 
+def translate_image_to_center(binary_image):
+    centroid_x, centroid_y = centroid_of_image(binary_image)
+    height, width = binary_image.shape[:2]
+    translation_x = (width // 2) - centroid_x
+    translation_y = (height // 2) - centroid_y
+
+    # Crie uma matriz de transformação para fazer o deslocamento
+    translation_matrix = np.float32([[1, 0, translation_x], [0, 1, translation_y]])
+
+    # Aplique o deslocamento para transladar a lesão para o centro da imagem
+    translated_image = cv.warpAffine(binary_image, translation_matrix, (width, height))
+    cv.imshow("Imagem centralizada",translated_image)
+    #cv.waitKey(0)
+
 
 def main() -> None:
     images_path_prefix = \
@@ -76,12 +91,19 @@ def main() -> None:
     all_images_path = \
         complete_images_path(images_path_prefix)
 
-    binary_mask = all_images_path[17]["binary_mask"]
+    binary_mask_path = all_images_path[0]["binary_mask"]
+    image_name = "IMD064"
+    binary_mask_path = f"../PH2Dataset/PH2 Dataset images/{image_name}/{image_name}_lesion/{image_name}_lesion.bmp"
     #print(all_images_path)
     #pre_process_all_images(all_images_path)
-    print(binary_mask)
-    draw_centroid_on_image(cv.imread(binary_mask, 0))
 
+    print(binary_mask_path)
+    binary_mask = (cv.imread(binary_mask_path, 0))
+    translate_image_to_center(binary_mask)
+    draw_centroid_on_image(binary_mask)
+    #asymmetry(binary_mask, 180)
+    #cv.imshow("BINARY MASK",binary_mask)
+    #cv.waitKey(0)
 
 if __name__ == "__main__":
     main()
