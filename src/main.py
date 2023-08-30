@@ -1,12 +1,13 @@
 import cv2 as cv
 import numpy as np
+import pandas as pd
 from functools import partial
 import sys
 import os
 
 from pre_process_image import pre_process_all_images
 from centroid import draw_centroid_on_image, centroid_of_image
-from abcd import asymmetry
+from abcd import asymmetry, border_irregularity
 
 def list_files_in_path(path):
     directories_list = os.listdir(path)
@@ -84,23 +85,29 @@ def translate_image_to_center(binary_image):
     cv.imshow("Imagem centralizada",translated_image)
     #cv.waitKey(0)
 
-
 def main() -> None:
-    images_path_prefix = \
-        "../PH2Dataset/PH2 Dataset images"
-    all_images_path = \
-        complete_images_path(images_path_prefix)
+    lesions_database_features_path = "../PH2Dataset/PH2_dataset.xlsx"
+    #images_path_prefix = \
+    #    "../PH2Dataset/PH2 Dataset images"
+    #all_images_path = \
+    #    complete_images_path(images_path_prefix)
 
-    binary_mask_path = all_images_path[0]["binary_mask"]
-    image_name = "IMD064"
-    binary_mask_path = f"../PH2Dataset/PH2 Dataset images/{image_name}/{image_name}_lesion/{image_name}_lesion.bmp"
+    #binary_mask_path = all_images_path[0]["binary_mask"]
+    
     #print(all_images_path)
     #pre_process_all_images(all_images_path)
-
-    print(binary_mask_path)
-    binary_mask = (cv.imread(binary_mask_path, 0))
-    translate_image_to_center(binary_mask)
-    draw_centroid_on_image(binary_mask)
+    data = pd.read_excel(lesions_database_features_path, header=12)
+    for _, row in data.iterrows():
+       image_name = row["Image Name"]
+       binary_mask_path = f"../PH2Dataset/PH2 Dataset images/{image_name}/{image_name}_lesion/{image_name}_lesion.bmp" 
+       binary_mask = cv.imread(binary_mask_path, 0) 
+       asymmetry_score = asymmetry(binary_mask)
+       print(row["Image Name"]) 
+       print(row["Asymmetry\n(0/1/2)"])
+       border_irregularity(binary_mask)
+       break
+    #translate_image_to_center(binary_mask)
+    #draw_centroid_on_image(binary_mask)
     #asymmetry(binary_mask, 180)
     #cv.imshow("BINARY MASK",binary_mask)
     #cv.waitKey(0)
